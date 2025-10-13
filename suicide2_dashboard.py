@@ -1,10 +1,4 @@
-# streamlit_suicide_detection_app_auto.py
-"""
-Dataset-agnostic Streamlit app for Suicidal Ideation Detection (TF-IDF + Logistic Regression)
-- Automatically detects text column
-- No NLTK dependency
-- Save file and run: streamlit run streamlit_suicide_detection_app_auto.py
-"""
+
 
 import os
 import re
@@ -21,10 +15,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.exceptions import NotFittedError
 
-# -------------------------
-# Configuration / constants
-# -------------------------
-TEXT_COL = "usertext"  # default, will auto-detect if missing
+
+TEXT_COL = "usertext"  
 LABEL_COL = "label"
 STOPWORDS_SET = set(STOPWORDS)
 
@@ -34,9 +26,7 @@ MODEL_PATH = os.path.join(MODEL_DIR, "logreg_grid.joblib")
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 
-# -------------------------
-# Helper functions
-# -------------------------
+
 def categorize_risk(text, label=None):
     """Simple regex-derived risk labels if no label column exists."""
     if label == 0:
@@ -84,7 +74,7 @@ def prepare_dataframe(df_raw):
 
     df[TEXT_COL] = df[TEXT_COL].astype(str).fillna("")
 
-    # derive risk_level
+  
     if "risk_level" not in df.columns:
         if LABEL_COL in df.columns:
             df["risk_level"] = df.apply(lambda r: categorize_risk(r[TEXT_COL], r.get(LABEL_COL, None)), axis=1)
@@ -110,9 +100,7 @@ def train_grid(X_train, y_train):
     return grid
 
 
-# -------------------------
-# Streamlit UI
-# -------------------------
+
 st.set_page_config(page_title="Suicidal Ideation Detection (Auto)", layout="wide")
 st.title("Suicidal Ideation Detection — Auto Text Column Detection")
 
@@ -131,14 +119,14 @@ if uploaded_file is None:
     st.info("Please upload a CSV file to proceed.")
     st.stop()
 
-# Load CSV
+
 try:
     df_raw = pd.read_csv(uploaded_file)
 except Exception as e:
     st.error(f"Failed to read CSV: {e}")
     st.stop()
 
-# Prepare data
+
 try:
     df = prepare_dataframe(df_raw)
 except Exception as e:
@@ -148,7 +136,7 @@ except Exception as e:
 st.subheader("Dataset preview")
 st.dataframe(df.head())
 
-# Risk distribution
+
 st.subheader("Risk-level distribution")
 counts = df["risk_level"].value_counts()
 fig, ax = plt.subplots(figsize=(6, 4))
@@ -158,7 +146,7 @@ ax.set_xlabel("Risk Level")
 plt.xticks(rotation=20)
 st.pyplot(fig)
 
-# Wordcloud
+
 st.subheader("Word Cloud (corpus)")
 corpus_text = " ".join(df["clean_text"].values)
 wc = WordCloud(width=1000, height=400, background_color="white", stopwords=STOPWORDS_SET).generate(corpus_text)
@@ -167,7 +155,7 @@ ax_wc.imshow(wc, interpolation="bilinear")
 ax_wc.axis("off")
 st.pyplot(fig_wc)
 
-# Vectorizer
+
 st.subheader("Model: TF-IDF + Logistic Regression")
 try:
     vectorizer = None
@@ -182,14 +170,14 @@ except Exception as e:
     st.error(f"Vectorizer error: {e}")
     st.stop()
 
-# Prepare X and y
+
 label_order = sorted(df["risk_level"].unique())
 label_map = {label: idx for idx, label in enumerate(label_order)}
 inv_label_map = {v: k for k, v in label_map.items()}
 y = df["risk_level"].map(label_map)
 X = vectorizer.transform(df["clean_text"])
 
-# Split & train
+
 if len(np.unique(y)) == 1:
     st.warning("Only one class present. Model will use trivial predictor.")
     trivial_class_idx = int(y.iloc[0])
@@ -214,7 +202,7 @@ else:
             joblib.dump(model, MODEL_PATH)
             st.success(f"Training complete (best params: {model.best_params_})")
 
-# Evaluation
+
 if model is not None and len(np.unique(y)) > 1:
     st.subheader("Evaluation on test set")
     try:
@@ -240,7 +228,7 @@ if model is not None and len(np.unique(y)) > 1:
     except Exception as e:
         st.warning(f"Could not evaluate model: {e}")
 
-# Top features
+
 st.subheader("Top features per class")
 try:
     if model is not None and hasattr(model, "best_estimator_"):
@@ -269,7 +257,6 @@ try:
 except Exception as e:
     st.warning(f"Could not compute top features: {e}")
 
-# Predict user input
 st.subheader("Predict risk level for input text")
 user_input = st.text_area("Paste a post/comment here:", height=150)
 if st.button("Predict"):
@@ -295,7 +282,7 @@ if st.button("Predict"):
             except Exception as e:
                 st.error(f"Prediction failed: {e}")
 
-# High-risk posts feed
+
 st.subheader("High & Critical Risk Posts (recent)")
 if "posts_shown" not in st.session_state:
     st.session_state.posts_shown = 10
@@ -312,3 +299,4 @@ if st.button("Load More Posts"):
 
 st.markdown("---")
 st.info("TF-IDF + Logistic Regression demo. Upgrade to transformer models for higher accuracy.")
+
