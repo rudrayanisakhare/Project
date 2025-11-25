@@ -1,0 +1,13 @@
+torch==2.2.0
+streamlit
+pandas
+numpy
+scikit-learn
+joblib
+tensorflow
+keras
+nltk
+plotly
+tweepy==4.15.0
+praw>=7.8.1
+requests==2.31.0
